@@ -1,0 +1,39 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Piano Chord Progression Visualizer</title>
+  <link rel="stylesheet/less" type="text/css" href="chords.less" />
+  <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js" ></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.1/js.cookie.min.js"></script>
+  <script src="//kit.fontawesome.com/cdac6e394b.js" crossorigin="anonymous"></script>
+  
+</head>
+<body>
+
+  <input type="text" id="chords" placeholder="Input textual chords here" value="C69 - Aaug - A7sharp5sharp9">
+
+  <div class="toolbar">
+    
+    <select id="instrument"></select>
+    &nbsp;&nbsp;
+    <input type="checkbox" id="humanize" checked><label for="humanize">Humanize</label>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    Octave <button class="textual" id="octave" data-values="2,3,4,5,6"><span class="value">4</span></button>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <input type="checkbox" id="play"><label for="play">Play</label>
+    for
+    <button class="textual" id="bpc" data-values="1,2,4"><span class="value">1</span> bar(s) <i class="fa fa-recycle" aria-hidden="true"></i></button>
+    per chord at
+    <button class="textual" id="bpm" data-values="60,90,120,160,200,250,300"><span class="value">120</span> bpm <i class="fa fa-recycle" aria-hidden="true"></i></button>
+
+  </div>
+
+  <div class="tpl"></div>
+  <div class="kbs"></div>
+  <script src="cv.js"></script>
+
+</body>
+</html>
