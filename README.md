@@ -8,4 +8,4 @@ Demo instruments are from [FatBoy](https://web.archive.org/web/20220124174052/ht
 
 ---
 
-<img width="1276" alt="image" src="https://user-images.githubusercontent.com/50331907/213876245-3dbcc6ee-5166-40c8-ab81-9c251b5fcff2.png">
+<img width="1156" alt="image" src="https://user-images.githubusercontent.com/50331907/214068984-f46704a8-17c4-4680-930e-8f1cc1682479.png">
