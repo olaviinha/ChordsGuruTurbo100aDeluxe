@@ -1,8 +1,9 @@
 
 // Defaults
-let humanization = 70;  // Each note starts to play within this many milliseconds
+let humanization = 60;  // Each note starts to play within this many milliseconds
 let bpm = 120;          // Default BPM
 let loop_bar = 1;       // Default count how many times each chord plays/repeats when Play active
+let default_octave = 3; // Default octave
 
 // Instrument paths (Any URL or directory paths that contain C3.mp3, Db3.mp3, etc.)
 let instruments = [
@@ -119,8 +120,8 @@ const notes_list = ['C','D','E','F','G','A','B','C#','D#','E#','F#','G#','A#','D
 
 let playing = false;
 let zoom = 1;
-let octave = 4;
-let player, delayed_chord_change_actions;
+let octave_shift = 0;
+let input_chords, player, delayed_chord_change_actions;
 let delayers = [];
 let audiofiles = [];
 let as = [];
@@ -147,7 +148,6 @@ function fail(el, msg) {
     $(el).append(`<div class="warn"></div>`);
   }
   $(el).find('.warn').append(`<div>${msg}</div>`);
-  console.warn(msg);
 }
 
 // Cycle values of a button
@@ -172,13 +172,27 @@ function bind_clicks() {
 
   // Click keyboard
   $('.kb').each(function(i){
+
     as[i] = new Array();
-    let notes = $(this).data('press').split(' ');
-    let octave_shift = parseInt(octave) + parseInt($(this).data('oshift'));
-    notes.forEach((note, i) => {
-      notes[i] = note+octave_shift;
+    let play_notes = $(this).data('audio').split(' ');
+    let oct_shift = parseInt($(this).data('octave-shift'));
+
+    // Apply global octave shift
+    if(oct_shift != 0){
+      play_notes.forEach((pn, i) => {
+        let oct = parseInt(pn[pn.length-1]);
+        play_notes[i] = pn.replace(oct, oct+oct_shift);
+      });
+    }
+
+    // Inversion cycle buttons
+    $(this).find('button').unbind().click(function(){
+      let parent = $(this).parent().parent();
+      cycle_inversion(parent, parent.data('midi').split(' '), $(this).hasClass('down') ? 'down' : 'up');
     });
-    $(this).unbind().click(function(){
+
+    // Click keyboard
+    $(this).find('.clickable').unbind().click(function(){
       // Humanize?
       let humanize = $('#humanize').is(':checked');
 
@@ -188,13 +202,13 @@ function bind_clicks() {
       // CSS
       if(css_fadeout) clearTimeout(css_fadeout);
       if(css_reset) clearTimeout(css_reset);
-      $(this).removeClass('playing fadeout');
-      $(this).addClass('playing');
+      $(this).parent().removeClass('playing fadeout');
+      $(this).parent().addClass('playing');
       css_fadeout = setTimeout(() => {
-        $(this).addClass('fadeout');
+        $(this).parent().addClass('fadeout');
       }, 100);
       css_reset = setTimeout(() => {
-        $(this).removeClass('playing fadeout');
+        $(this).parent().removeClass('playing fadeout');
       }, 3000);
 
       // Stop previous plays
@@ -205,7 +219,7 @@ function bind_clicks() {
 
       // Play audio
       delayers[delayers.length+1] = setTimeout(() => {
-        notes.forEach((note, i) => {
+        play_notes.forEach((note, i) => {
           let a = 'audio#sound-'+note;
           if($(a).length){
             $(a).addClass('playing');
@@ -265,8 +279,7 @@ function bind_clicks() {
 
   // Click octave
   $('#octave').unbind().click(function(){
-    octave = cycle_values('#octave');
-    change_octave(octave);
+    change_octave(cycle_values('#octave'));
     $(this).blur();
     bind_clicks();
   });
@@ -276,9 +289,9 @@ function bind_clicks() {
 // Change octave
 function change_octave(oct){
   $('.kb').each(function(){
-    $(this).attr('data-octave', oct);
+    $(this).data('octave-shift', oct);
   });
-  Cookies.set('octave', octave);
+  Cookies.set('octave_shift', oct);
 }
 
 // Play function
@@ -298,12 +311,12 @@ function loop_chords(){
   let i = 0;
 
   // Programmatically click elements
-  $('.kb').eq(i).click();
+  $('.kb').eq(i).find('.clickable').click();
   if(loop_bar > 1){
     loop_counter = 1;
     for(ii=1;ii<loop_bar;ii++){
       delayers[delayers.length+1] = setTimeout(() => {
-        $('.kb').eq(i).click();
+        $('.kb').eq(i).find('.clickable').click();
         loop_counter++;
         if(loop_counter==loop_bar) i++;
       }, len*ii);
@@ -315,12 +328,12 @@ function loop_chords(){
   // Repeat same clicks on interval
   player = setInterval(() => {
     if(i==last_bar) i = 0;
-    $('.kb').eq(i).click();
+    $('.kb').eq(i).find('.clickable').click();
     if(loop_bar > 1){
       loop_counter = 1;
       for(ii=1;ii<loop_bar;ii++){
         delayers[delayers.length+1] = setTimeout(() => {
-          $('.kb').eq(i).click();
+          $('.kb').eq(i).find('.clickable').click();
           loop_counter++;
           if(loop_counter==loop_bar) i++;
         }, len*ii);
@@ -352,8 +365,8 @@ function generate_chord_list(html=false) {
 
 // Load instrument from select menu
 function load_instrument(instrument) {
+  let octaves = [1, 2, 3, 4, 5, 6, 7]; // Octaves to load
   $('audio').remove();
-  let octaves = $('#octave').data('values').split(',');
   notes_list.forEach((note) => { 
     if(note.indexOf('#') == -1) {
       octaves.forEach((oct) => {
@@ -361,6 +374,87 @@ function load_instrument(instrument) {
       });
     } 
   });
+}
+
+// Midi note (int) to regular note ("C4")
+function midi_to_note(midi_note) {
+  let notes = nw.concat(nb);
+  matches = notes.filter(note => midi_note==note[0])[0];
+  [_, oct, __, note_d] = matches;
+  note_d = note_d.indexOf('/') > -1 ? note_d.split('/')[1] : note_d;
+  return note_d+oct;
+
+}
+
+// Regular note ("C4") to midi note (int)
+function note_to_midi(note) {
+  let found_midi = null;
+  nw.forEach((n) => {
+    [midi, oct, _, note_d] = n;
+    if(note_d+oct==note) found_midi = midi;
+  });
+  nb.forEach((n) => { 
+    [midi, oct, _, note_d] = n;
+    [n1, n2] = note_d.split('/');
+    if(n1+oct==note || n2+oct==note) found_midi = midi;
+  });
+  return found_midi;
+}
+
+// Update keys of an existing keyboard
+function update_keys(el, notes) {
+  el.find('.key').removeClass('down');
+
+  // Highlight pressed note
+  notes.forEach((note, i) => {
+    el.find(`.key[data-midi="${note}"]`).addClass('down');
+  });
+
+  // Update which audio files this keyboard plays
+  new_audio = [];
+  notes.forEach(n => new_audio.push(midi_to_note(n)));
+
+  // Store those to keyboard data attributes
+  el.data('midi', notes.join(' '));
+  el.data('audio', new_audio.join(' '));
+}
+
+// Cycle chord inversion up or down
+function cycle_inversion(el, notes, direction='down') {
+
+  // Limit inversion to lowest and highest visible midi note
+  let [min, max] = [60, 96];
+
+  // If chord extends 1 octave, inverse 2 octaves
+  let lowest_chord_note = Math.min(...notes);
+  let highest_chord_note = Math.max(...notes);
+  let change_scale = highest_chord_note - lowest_chord_note > 12 ? 24 : 12;
+
+  // Inversion direction
+  let inversion = parseInt(el.find('.tools').data('inversion')) + (direction=='down' ? -1 : 1);
+
+  // Do it
+  notes.forEach((note, i) => { notes[i] = parseInt(note); });
+  let change = direction=='down' ? highest_chord_note : lowest_chord_note;
+  notes.forEach((note, i) => {
+    if(note == change){
+      notes[i] = note + (direction=='down' ? -change_scale : change_scale);
+    }
+  });
+  if(Math.min(...notes) < min || Math.max(...notes) > max) return;
+
+  el.find('.tools').data('inversion', inversion);
+
+  // Button styles
+  el.find('.tools, .tools button').removeClass('active');
+  if(inversion > 0){
+    el.find('.tools, .up').addClass('active');
+  } else if (inversion < 0){
+    el.find('.tools, .down').addClass('active');
+  }
+
+  update_keys(el, notes);
+  bind_clicks();
 }
 
 // Fix CSS styling, notably keyboard sizes when DOM or window changes
@@ -381,7 +475,7 @@ function fix_style(current_zoom) {
   }
 
   $('.kb').css('margin', '');
-  $('.kb:nth-child('+cols+'n)').css('margin-right', 0);
+  $(`.kb:nth-child(${cols}n)`).css('margin-right', 0);
 
   return zoom;
 }
@@ -394,12 +488,12 @@ $(document).ready(function(){
   let pre_bpm = Cookies.get('bpm');
   let pre_bpc = Cookies.get('bpc');
   let pre_instrument = Cookies.get('instrument');
-  let pre_octave = Cookies.get('octave');
+  let pre_octave_shift = Cookies.get('octave_shift');
 
   // Create white keys and audiofile filenaming scheme
   nw.forEach((k, i) => {
     [midi, oct, note, note_d] = k;
-    $('.tpl').append(`<div class="white key" data-note="${note_d}" data-octave="${oct}" data-midi="${midi}" id="k${midi}"></div>`);
+    $(`.tpl .clickable`).append(`<div class="white key" data-note="${note_d}${oct}" data-midi="${midi}"></div>`);
     // audiofiles.push(note_d+oct);
   });
 
@@ -408,9 +502,11 @@ $(document).ready(function(){
     [midi, oct, note, note_d] = k;
     [note1, note2] = note_d.split('/');
     let parent = midi-1;
-    $('.tpl').find('#k'+parent).append(`<div class="black key" data-note="${note1}" data-note2="${note2}" data-octave="${oct}" data-midi="${midi}" id="k${midi}"></div>`);
+    $('.tpl').find(`.key[data-midi="${parent}"]`).append(`<div class="black key" data-note="${note2}${oct}" data-midi="${midi}" id="k${midi}"></div>`);
     // audiofiles.push(note2+oct);
   });
+
+  $('.tpl .tools').append('<button class="down"><i class="fas fa-arrow-down"></i></button><button class="up"><i class="fas fa-arrow-up"></i></button>');
 
   // Create instrument menu
   instruments.forEach((instrument) => {
@@ -433,6 +529,9 @@ $(document).ready(function(){
   let input_chords = [];
   $('#chords').keyup(function(){
 
+    // Get octave shift
+    octave_shift = parseInt($('#octave').find('.value').text());
+
     // Trim input field
     $(this).val($('#chords').val().replace('  ', ' '));
 
@@ -440,28 +539,32 @@ $(document).ready(function(){
     if(player) clearInterval(player);
     if(delayed_chord_change_actions) clearInterval(delayed_chord_change_actions);
 
-    // Remove all keyboards
-    $('.kb').remove();
-
     // Split input to chords
-    let input = $(this).val().replaceAll('-', ' - ').replaceAll('  ', ' ');
-    let input_chords = input.split(' ');
+    let input = $(this).val().replaceAll('  ', ' ');
 
     // Set to cookie
     Cookies.set('last_input', input);
 
-    // For each chord
+    // Process input
+    input_chords = input.split(' ');
+    $('.kb').addClass('obsolete');
+    $('.hr').remove();
     input_chords.forEach((input_chord, i) => {
 
-      // Remove hötö
-      input_chord = input_chord.replace(',', '').replace('(', '').replace(')', '');
+      let kb_id = `row${i}`;
 
+      // Remove hötö
+      input_chord = input_chord.replace('-', '').replace(',', '').replace('(', '').replace(')', '');
+
+      // TODO:
+      // Turn --- into separator
+      
       // Skip already if it's just drivelpoop
       if(input_chord=='' || (input_chord.length == 1 && !/^[a-zA-Z]+$/.test(input_chord))) return;
 
       // Determine whether root note is 1 or 2 chars
-      let test = input_chord[1] == '#' || input_chord[1] == 'b' ? input_chord[0]+input_chord[1] : input_chord[0];
-      let start_midi = $(`[data-note="${test}"][data-octave="3"]`).data('midi') || $(`[data-note2="${test}"][data-octave="3"]`).data('midi');
+      let test = input_chord[1] == '#' || input_chord[1] == 'b' ? input_chord[0]+input_chord[1] : input_chord[0] ;
+      let start_midi = $(`[data-note="${test+default_octave}"]`).data('midi') || $(`[data-note2="${test+default_octave}"]`).data('midi');
 
       // Skip already if not included in notes list
       if(!notes_list.includes(test)) return;
@@ -473,25 +576,30 @@ $(document).ready(function(){
       let notes = [];
       chords.forEach((list_chord) => {
         [name, index, intervals, is_major] = list_chord;
-        test2 = input_chord.substring(test.length)
-                  .replace('#', 'sharp')
-                  .replace('/', '');
-        if(test2 == name){
-          $('.kbs').append(`<div class="kb row${i}" data-octave="${octave}" data-oshift="0" style="zoom:${zoom};">${tpl}</div>`);
+        let full_chord = input_chord.replaceAll('#', 'sharp').replaceAll('/', '');
+        if(test+name == full_chord){
+          $(`.${kb_id}`).removeClass('obsolete');
           intervals.forEach((interval) => {
             notes.push(start_midi+interval);
           });
+          // Update keyboard if it exists and chord changed
+          if($(`.${kb_id}`).length){
+            let kb_chord = $(`.${kb_id}`).data('chord');
+            if(kb_chord != full_chord) {
+              update_keys($(`.${kb_id}`), notes);
+              $(`.${kb_id}`).data('chord', full_chord);
+            }
+          } else {
+            $('.kbs').append(`<div class="kb ${kb_id}" data-chord="${full_chord}" data-octave-shift="${octave_shift}" style="zoom:${zoom};">${tpl}</div>`);
+            $(`.${kb_id}`).data('chord', full_chord);
+            update_keys($(`.${kb_id}`), notes);
+          }
         }
+
       });
 
-      // Determine pressed keys in freshly drawn keyboard
-      let press = [];
-      notes.forEach((note) => {
-        let key_note = $(`.row${i}`).find('[data-midi="'+note+'"]').data('note2') || $(`.row${i}`).find('[data-midi="'+note+'"]').data('note');
-        press.push(key_note);
-        $(`.row${i}`).find('[data-midi="'+note+'"]').addClass('down');
-      });
-      $(`.row${i}`).data('press', press.join(' '));
+      // Remove obsolete keyboards
+      $('.obsolete').remove();
 
     });
 
@@ -534,10 +642,10 @@ $(document).ready(function(){
   if(pre_instrument) {
     $('#instrument').val(pre_instrument);
   }
-  if(pre_octave) {
-    octave = parseInt(pre_octave);
-    $('#octave').find('.value').html(octave);
-    change_octave(octave);
+  if(pre_octave_shift) {
+    octave_shift = parseInt(pre_octave_shift);
+    $('#octave').find('.value').html(octave_shift);
+    change_octave(octave_shift);
   }
 
   // Bind keyboard click and possibly resume play
