@@ -1,9 +1,11 @@
 :root {
   --color-base: #ddd;
+  --color-dim: #666;
   --color-link: rgb(133, 179, 244);
   --color-hit: #fff;
   --txt-size: 16px;
   --fade-duration: 3s;
+  --radius: 2px;
 }
 
 * {
@@ -25,7 +27,17 @@ body {
   padding: 20px;
 }
 
-i.fa {
+div.hr {
+  height: 1px;
+  border: 0;
+  background: var(--color-dim);
+  position: relative;
+  top: -10px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+i.fa, i.fas {
   font-size: 12px;
   margin-left: 1px;
   opacity: .5;
@@ -95,6 +107,50 @@ input[type="checkbox"] {
   border: 0;
   white-space: nowrap;
   margin: 0 20px 20px 0;
+  &:hover {
+    .tools {
+      opacity: 1;
+    }
+  }
+  .tools {
+    position: absolute;
+    top: 0;
+    right: 5px;
+    z-index: 3;
+    opacity: 0;
+    transition: opacity .15s ease-in-out;
+    &.active {
+      opacity: 1;
+    }
+    button {
+      background: #666;
+      margin: 0;
+      padding: 3px 7px;
+      border: 0;
+      color: var(--color-base);
+      box-shadow: 2px 1px 2px rgba(0,0,0,.4);
+      i.fas {
+        font-size: 10px;
+        opacity: 1;
+        display: block;
+      }
+      &.down {
+        border-top-left-radius: var(--radius);
+        border-bottom-left-radius: var(--radius);
+      }
+      &.up {
+        border-top-right-radius: var(--radius);
+        border-bottom-right-radius: var(--radius);
+        border-left: 1px solid #999;
+      }
+      &:hover {
+        background: #888;
+      }
+      &.active, &.active:hover {
+        background: #866;
+      }
+    }
+  }
   .warn {
     position: absolute;
     bottom: -40px;
@@ -120,8 +176,8 @@ input[type="checkbox"] {
       left: 13px;
       z-index: 2;
       box-shadow: 2px 0 1px rgba(0,0,0,.2);
-      border-bottom-left-radius: 2px;
-      border-bottom-right-radius: 2px;
+      border-bottom-left-radius: var(--radius);
+      border-bottom-right-radius: var(--radius)
     }
     &.down {
       background: #d66;
@@ -144,10 +200,10 @@ input[type="checkbox"] {
   &.resizing {
     opacity: .5;
   }
-  &.playing {
+  &.playing .clickable {
     box-shadow: 0 0 10px 5px var(--color-hit);
   }
-  &.fadeout {
+  &.fadeout .clickable {
     box-shadow: 0 0 0 0 var(--color-hit);
     transition: box-shadow var(--fade-duration);
   }
