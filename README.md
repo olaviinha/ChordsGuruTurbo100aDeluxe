@@ -1,4 +1,4 @@
-# Chords Guru Deluxe Turbo 100A
+# Chords Guru Turbo 100a Deluxe 
 
 Webapp for simple visualization and audio previewing of textual chord progressions.
 
