@@ -11,7 +11,7 @@ Features:
 - Humanize the audio preview
 - Instrument selection for the audio preview
 - Octave shift for the audio preview
-- Auto-play the entire progression according to BPM and number of plays per chord.
+- Auto-play/loop the entire progression according to BPM and number of repeats per chord.
 
 Demo instruments are from [FatBoy](https://web.archive.org/web/20220124174052/https://fatboy.site/) (deprecated) via [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts/)
 
