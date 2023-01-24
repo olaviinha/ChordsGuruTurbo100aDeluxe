@@ -7,6 +7,7 @@ let default_octave = 3; // Default octave
 
 let mobile = 768;       // Breakpoint for 1 col
 let large_screen = 1800;// Breakpoint for 3 cols
+let autocomplete = true;
 
 // Instrument paths (Any URL or directory paths that contain C3.mp3, Db3.mp3, etc.)
 let instruments = [
@@ -87,7 +88,6 @@ const chords = [
     ["11", 14, [0, 4, 7, 10, 14, 17],true],
     ["13", 15, [0, 4, 7, 10, 14, 17, 21],true],
     ["69", 16, [0, 4, 7, 9, 14],true],
-    ["6add9", 16, [0, 4, 7, 9, 14],true], //mask for 69
     ["7b5", 17, [0, 4, 6, 10],true],
     ["9b5", 18, [0, 4, 6, 10, 14],true],
     ["7b9", 19, [0, 4, 7, 10, 13],true],
@@ -115,11 +115,20 @@ const chords = [
     ["mmaj11", 41, [0, 3, 7, 11, 14, 17],false],
     ["add9", 42, [0, 4, 7, 14],true],
     ["madd9", 43, [0, 3, 7, 14],false],
-    ["13sus4", 44, [0, 5, 7, 10, 14, 17],false]
+    ["13sus4", 44, [0, 5, 7, 10, 14, 17],false],
+    // masks
+    ["6add9", 45, [0, 4, 7, 9, 14],true], // 16
+    ["7#9", 46, [0, 4, 7, 10, 15],true], // 20
+    ["7#5b9", 47, [0, 4, 8, 10, 13],true], // 22
+    ["7b5#9", 48, [0, 4, 6, 10, 15],true], // 23
+    ["7#5#9", 49, [0, 4, 8, 10, 15],true], // 24
+    ["9#11", 50, [0, 4, 7, 10, 14, 18],true], // 25
+    ["maj7#5", 51, [0, 4, 8, 11],true], // 31
 ];
 
 // Notes
-const notes_list = ['C','D','E','F','G','A','B','C#','D#','E#','F#','G#','A#','Db','Eb','Gb','Ab','Bb'];
+const unique_notes = ['C','D','E','F','G','A','B','C#','D#','E#','F#','G#','A#','Db','Eb','Gb','Ab','Bb'];
+const all_notes = nw.concat(nb); //nw.slice(0, 7).concat(nb.slice(0, 5));
 
 let playing = false;
 let page_loaded = false;
@@ -537,9 +546,19 @@ function loop_chords(){
 function generate_chord_list(html=false) {
   let chord_list = []
   chords.forEach((c) => {
-    nw.forEach((n) => { chord_list.push(n[3]+c[0]); });
-    nb.forEach((n) => { chord_list.push(n[3]+c[0]); });
+    if(c[0].indexOf('sharp') == -1){
+      unique_notes.forEach((n) => {
+        if(n.indexOf('/') > -1){
+          [n1, n2] = n.split('/');
+          chord_list.push(n1+c[0]);
+          chord_list.push(n2+c[0]);
+        } else {
+          chord_list.push(n+c[0]);
+        }
+      });
+    }
   });
+
   if(html===false){
     return chord_list;
   } else {
@@ -549,6 +568,7 @@ function generate_chord_list(html=false) {
     html += `</select>`;
     return html;
   }
+
 }
 
 // Load instrument from select menu
@@ -556,7 +576,7 @@ function load_instrument(load_instrument) {
   wobbly_loader();
   let octaves = [1, 2, 3, 4, 5, 6, 7]; // Octaves to load
   $('audio').remove();
-  notes_list.forEach((note) => { 
+  unique_notes.forEach((note) => { 
     if(note.indexOf('#') == -1) {
       octaves.forEach((oct) => {
         $('body').prepend(`<audio id="sound-${note}${oct}" src="${load_instrument}/${note}${oct}.mp3" preload="auto">`);
@@ -569,8 +589,7 @@ function load_instrument(load_instrument) {
 
 // Midi note (int) to regular note ("C4")
 function midi_to_note(midi_note) {
-  let notes = nw.concat(nb);
-  matches = notes.filter(note => midi_note==note[0])[0];
+  let matches = all_notes.filter(note => midi_note==note[0])[0];
   [_, oct, __, note_d] = matches;
   note_d = note_d.indexOf('/') > -1 ? note_d.split('/')[1] : note_d;
   return note_d+oct;
@@ -719,10 +738,44 @@ function construct_cookie(cookie=session_cookie) {
   }, 2000) : null;
 }
 
+// Autocomplete
+let autocomplete_delayer;
+function update_autocomplete(field_input) {
+  if(autocomplete_delayer) clearTimeout(autocomplete_delayer);
+  autocomplete_delayer = setTimeout(() => {
+    let entries = field_input.split(' ');
+    let last = entries.length;
+    let pre = entries.pop();
+    if(pre.length > 1){
+      $('.autocomplete-helper .pre').html(entries.join(' '));
+      $('#faux').val(pre);
+      $('#faux').autocomplete('search', pre);
+      $('.ui-autocomplete li').unbind('click').click(function() {
+        let new_val = entries.join(' ')+' '+$(this).find('div').text() + ' - ';
+        $('#chords').val(new_val).trigger('keyup');
+        setTimeout(function(){
+          $('#chords').focus();
+        }, 20);
+      });
+    }
+  }, 200);
+}
+
+// Init autocomplete
+function init_autocomplete() {
+  let all_chords = generate_chord_list();
+  $('#faux').autocomplete({
+    source: all_chords,
+    minLength: 2
+  });
+}
+
 $(document).ready(function(){
 
   wobbly_loader();
   if(input) $('#chords').val(input);
+
+  $('#fauxchords').val(input);
 
   // Create white keys and audiofile filenaming scheme
   nw.forEach((k, i) => {
@@ -736,7 +789,7 @@ $(document).ready(function(){
     [midi, oct, note, note_d] = k;
     [note1, note2] = note_d.split('/');
     let parent = midi-1;
-    $('.tpl').find(`.key[data-midi="${parent}"]`).append(`<div class="black key" data-note="${note2}${oct}" data-midi="${midi}" id="k${midi}"></div>`);
+    $('.tpl').find(`.key[data-midi="${parent}"]`).append(`<div class="black key" data-note="${note2}${oct}" data-note2="${note1}${oct}" data-midi="${midi}" id="k${midi}"></div>`);
     // audiofiles.push(note2+oct);
   });
 
@@ -778,6 +831,8 @@ $(document).ready(function(){
     // Split input to chords
     input = $(this).val().replaceAll('  ', ' ');
 
+    if(page_loaded && autocomplete) update_autocomplete(input);
+
     // Remove all chords if input is empty
     if(input == '' || !input) {
       $('.kb').remove();
@@ -806,7 +861,7 @@ $(document).ready(function(){
       let start_midi = $(`[data-note="${test+default_octave}"]`).data('midi') || $(`[data-note2="${test+default_octave}"]`).data('midi');
 
       // Skip already if not included in notes list
-      if(!notes_list.includes(test)) return;
+      if(!unique_notes.includes(test)) return;
 
       // Default chord to major
       if(input_chord.length == 1 || (input_chord.length == 2 && (input_chord[1] == '#' || input_chord[1] == 'b'))) input_chord = input_chord+'major';
@@ -815,7 +870,7 @@ $(document).ready(function(){
       let notes = [];
       chords.forEach((list_chord) => {
         [name, index, intervals, is_major] = list_chord;
-        let full_chord = input_chord.replaceAll('#', 'sharp').replaceAll('/', '');
+        let full_chord = input_chord.replaceAll('/', '');        
         if(test+name == full_chord){
           $(`.${kb_id}`).removeClass('obsolete');
           intervals.forEach((interval) => {
@@ -841,7 +896,6 @@ $(document).ready(function(){
 
     });
 
-    // Fix layout
     zoom = fix_style(zoom);
 
     // Bind keyboard click and possibly resume play
@@ -874,6 +928,8 @@ $(document).ready(function(){
   // Delay binding clicks
   delayers[delayers.length+1] = setTimeout(() => {
     bind_clicks();
+    if(autocomplete) init_autocomplete();
+    zoom = fix_style(zoom);
     page_loaded = true;
   }, 2000);
 
