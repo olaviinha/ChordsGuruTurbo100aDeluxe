@@ -421,6 +421,8 @@ function bind_clicks() {
     }).mouseleave(() => {
       hide_info();
     })
+  } else {
+    $('#save, #load').unbind('mouseenter mouseleave');
   }
 
 } // bind_clicks()
@@ -444,6 +446,7 @@ function reset(){
   $('#octave').find('.value').html(octave_shift);
   change_octave(octave_shift);
   $('#chords').val(input).trigger('keyup');
+  bind_clicks();
 }
 
 // Auto-config UI
