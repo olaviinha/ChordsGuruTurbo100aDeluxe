@@ -831,16 +831,15 @@ $(document).ready(function(){
     if(player) clearInterval(player);
     if(delayed_chord_change_actions) clearInterval(delayed_chord_change_actions);
 
-    // Split input to chords
-    input = $(this).val().replaceAll('  ', ' ');
-
-    if(page_loaded && autocomplete) update_autocomplete(input);
-
     // Remove all chords if input is empty
+    input = $(this).val().replaceAll('  ', ' ');
     if(input == '' || !input) {
       $('.kb').remove();
       return;
     }
+
+    // Fire autocomplete
+    if(page_loaded && autocomplete) update_autocomplete(input);
 
     // Process input
     input_chords = input.split(' ');
@@ -928,7 +927,7 @@ $(document).ready(function(){
     construct_cookie(session_cookie);
   });
 
-  // Delay binding clicks
+  // Finish up pageload
   delayers[delayers.length+1] = setTimeout(() => {
     bind_clicks();
     if(autocomplete) init_autocomplete();
