@@ -13,7 +13,7 @@ Live demo: [https://ki.gy/cv](https://ki.gy/cv)
 - Octave shift for the audio preview
 - Auto-play/loop the entire progression according to BPM and number of repeats per chord.
 - Automatically continue where you left off (per device)
-- Save and load chord progressions (**NOTE** that sessions are stored in cookies, so don't expect them to be stored forever)
+- Save and load chord progressions (**NOTE** that sessions are stored in your browser's cookies, so don't expect them to be stored forever)
 
 ### Also:
 - Add or replace instrument from any URL or directory path (e.g. copy-paste URL from [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy), [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FluidR3_GM) or [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/MusyngKite)) to the instruments list in `cv.js`.
