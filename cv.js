@@ -545,7 +545,7 @@ function loop_chords(){
 
 }
 
-// Generate list of all chords (currently not used anywhere)
+// Generate list of all available chords
 function generate_chord_list(html=false) {
   let chord_list = []
   chords.forEach((c) => {
