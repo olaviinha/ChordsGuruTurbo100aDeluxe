@@ -12,15 +12,14 @@ Live demo: [https://ki.gy/cv](https://ki.gy/cv)
 - Instrument selection for the audio preview
 - Octave shift for the audio preview
 - Auto-play/loop the entire progression according to BPM and number of repeats per chord.
-- Continue where you left off (session is saved to cookies per device).
+- Automatically continue where you left off (per device)
+- Save and load chord progressions (**NOTE** that sessions are stored in cookies, so don't expect them to be stored forever)
 
-### Configs:
-- Add or replace instrument from any URL or directory path (e.g. copy-paste URL from [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy), [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FluidR3_GM) or [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/MusyngKite))
-- Default BPM
-- Default octave
+### Also:
+- Add or replace instrument from any URL or directory path (e.g. copy-paste URL from [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy), [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FluidR3_GM) or [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/MusyngKite)) to the instruments list in `cv.js`.
 
 Demo instruments are from [FatBoy](https://web.archive.org/web/20220124174052/https://fatboy.site/) (deprecated) via [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts/)
 
 ---
 
-<img width="1190" alt="image" src="https://user-images.githubusercontent.com/50331907/214141244-a11291ea-4727-4223-849b-602e317c85aa.png">
+![image](https://user-images.githubusercontent.com/50331907/214382008-8243d044-1cc8-4dd5-9ad7-a0f8e18c9fca.png)
