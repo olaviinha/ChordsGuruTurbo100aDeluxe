@@ -2,7 +2,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <title>Piano Chord Progression Visualizer</title>
+  <title>Chords Guru Turbo 100a Deluxe</title>
   <link rel="stylesheet/less" type="text/css" href="cv.less" />
   <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js" ></script>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -18,6 +18,9 @@
 
   <div class="inputs">
     <input type="text" id="chords" placeholder="Input textual chords here">
+    <div class="autocomplete-helper">
+      <div class="pre"></div><input type="text" id="faux">
+    </div>
     <div class="info"></div>
     <div class="tools">
       <button id="save"><i class="fa-solid fa-floppy-disk"></i></button>
@@ -35,9 +38,9 @@
     Octave shift <button class="textual" id="octave" data-values="-1,0,+1"><span class="value">0</span></button>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <input type="checkbox" id="play"><label for="play">Play</label>
-    for
-    <button class="textual" id="bpc" data-values="1,2,4"><span class="value">1</span> bar(s) <i class="fa fa-recycle" aria-hidden="true"></i></button>
-    per chord at
+    each chord for 1 bar
+    <button class="textual" id="bpc" data-values="1,2,4"><span class="value">1</span> time(s) <i class="fa fa-recycle" aria-hidden="true"></i></button>
+    at
     <button class="textual" id="bpm" data-values="60,90,120,160,200,250,300"><span class="value">120</span> bpm <i class="fa fa-recycle" aria-hidden="true"></i></button>
 
   </div>
@@ -46,7 +49,11 @@
     <div class="clickable"></div>
     <div class="tools" data-inversion="0"></div>
   </div>
+
   <div class="kbs"></div>
+
+  <div class="all-chords"></div>
+
   <script src="cv.js"></script>
 
 </body>
