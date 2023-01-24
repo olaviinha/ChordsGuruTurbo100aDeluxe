@@ -6,6 +6,7 @@
   --txt-size: 16px;
   --fade-duration: 3s;
   --radius: 2px;
+  --shadow-light: 2px 1px 2px rgba(0,0,0,.4);
 }
 
 * {
@@ -25,6 +26,10 @@ body {
   font-size: var(--txt-size);
   margin: 0;
   padding: 20px;
+}
+
+.hidden {
+  display: none;
 }
 
 div.hr {
@@ -64,6 +69,26 @@ button,
   cursor: pointer;
 }
 
+input[type="checkbox"] {
+  margin: 0 10px 20px 0;
+}
+
+.site_loader {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 10px;
+  width: 100%;
+  background: transparent;
+  .bar {
+    position: relative;
+    width: 0;
+    height: 100%;
+    background: var(--color-dim);
+  }
+}
+
 .tpl {
   display: none;
 }
@@ -78,7 +103,7 @@ select {
   display: block;
   margin-bottom: 20px;
   padding: 10px;
-  width: 100%;
+  // width: 100%;
   border: 0;
   font-size: 16px;
   background: var(--color-base);
@@ -91,12 +116,82 @@ select {
   padding: 5px;
 }
 
-.toolbar {
-  margin-bottom: 20px;
+
+.inputs {
+  display: flex;
+  align-items: baseline;
+  input, .tools {
+    width: auto;
+  }
+  input {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-right: 5px;
+  }
+  .info {
+    width: 1px;
+    text-align: right;
+    transition: all .1s ease-in-out;
+    &.active {
+      flex-grow: 1;
+      flex-basis: content;
+      padding-right: 20px;
+      width: auto;
+    }
+  }
+  .tools {
+    position: relative;
+    z-index: 4;
+    button {
+      margin: 0 0 0 10px;
+      padding: 8px 10px;
+      font-size: 20px;
+      border: 0;
+      border-radius: 0;
+      color: var(--color-dim);
+      position: relative;
+      top: 2px;
+    }
+    #open_session {
+      position: absolute;
+      right: -10px;
+      width: auto;
+      min-width: 250px;
+      // padding: 10px;
+      margin-right: 10px;
+      background: var(--color-dim);
+      box-shadow: var(--shadow-light);
+      div {
+        padding: 5px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        cursor: pointer;
+        
+        &:first-child {
+          padding-top: 10px;
+        }
+        &:last-child {
+          padding-bottom: 10px;
+        }
+        &:hover {
+          background: #999;
+        }
+        .icon {
+          // position: relative;
+          // bottom: -5px;
+          &:hover {
+            color: #633;
+          }
+        }
+      }
+    }
+  }
 }
 
-input[type="checkbox"] {
-  margin: 0 10px 20px 0;
+
+.toolbar {
+  margin-bottom: 20px;
 }
 
 .kb {
@@ -128,7 +223,7 @@ input[type="checkbox"] {
       padding: 3px 7px;
       border: 0;
       color: var(--color-base);
-      box-shadow: 2px 1px 2px rgba(0,0,0,.4);
+      box-shadow: var(--shadow-light);
       i.fas {
         font-size: 10px;
         opacity: 1;
