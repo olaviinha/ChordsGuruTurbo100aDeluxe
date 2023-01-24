@@ -231,7 +231,7 @@ function bind_clicks() {
 
   let css_fadeout = null;
   let css_reset = null;
-  as = new Array();
+  let as = new Array();
 
   // Click keyboard
   $('.kb').each(function(i){
@@ -507,7 +507,7 @@ function loop_chords(){
 
   let beats = 4; // Beats per bar
   let last_bar = $('.kb').length;
-  len = 60/bpm*beats*1000;
+  let len = 60/bpm*beats*1000;
   let i = 0;
 
   // Programmatically click elements
@@ -637,7 +637,7 @@ function cycle_inversion(el, notes, direction='down') {
   // Limit inversion to lowest and highest visible midi note
   let [min, max] = [60, 96];
 
-  // If chord extends 1 octave, inverse 2 octaves
+  // If chord exceeds 1 octave, inverse 2 octaves
   let lowest_chord_note = Math.min(...notes);
   let highest_chord_note = Math.max(...notes);
   let change_scale = highest_chord_note - lowest_chord_note > 12 ? 24 : 12;
