@@ -5,15 +5,16 @@ Webapp for simple visualization and audio previewing of textual chord progressio
 Live demo: [https://ki.gy/cv](https://ki.gy/cv)
 
 ### Features:
-- Visualize textual chords / chord progressions
-- Click chord visualization to hear audio preview
-- Chord inversion cycling
-- Humanize the audio preview
-- Instrument selection for the audio preview
-- Octave shift for the audio preview
+- Visualize textual chords / chord progressions.
+- Autocomplete from over 800 chords while typing.
+- Click chord visualization to hear audio preview.
+- Chord inversion cycling.
+- Humanize the audio preview.
+- Instrument selection for the audio preview.
+- Octave shift for the audio preview.
 - Auto-play/loop the entire progression according to BPM and number of repeats per chord.
-- Automatically continue where you left off (per device)
-- Save and load chord progressions (**NOTE** that sessions are stored in your browser's cookies, so don't expect them to be stored forever)
+- Automatically continue where you left off (per device).
+- Save and load chord progressions (**NOTE** that sessions are stored in your browser's cookies, so don't expect them to be stored forever).
 
 ### Also:
 - Add or replace instrument from any URL or directory path (e.g. copy-paste URL from [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy), [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FluidR3_GM) or [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/MusyngKite)) to the instruments list in `cv.js`.
