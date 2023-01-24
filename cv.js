@@ -5,19 +5,22 @@ let bpm = 120;          // Default BPM
 let loop_bar = 1;       // Default count how many times each chord plays/repeats when Play active
 let default_octave = 3; // Default octave
 
+let mobile = 768;       // Breakpoint for 1 col
+let large_screen = 1800;// Breakpoint for 3 cols
+
 // Instrument paths (Any URL or directory paths that contain C3.mp3, Db3.mp3, etc.)
 let instruments = [
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/acoustic_grand_piano-mp3',
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/accordion-mp3',
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/lead_6_voice-mp3',
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/pad_1_new_age-mp3',
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/pad_4_choir-mp3',
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/synth_strings_2-mp3',
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/violin-mp3',
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/banjo-mp3',
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/choir_aahs-mp3',
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/cello-mp3',
-  'https://raw.githubusercontent.com/gleitz/midi-js-soundfonts/gh-pages/FatBoy/church_organ-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/acoustic_grand_piano-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/accordion-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/lead_6_voice-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/pad_1_new_age-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/pad_4_choir-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/synth_strings_2-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/violin-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/banjo-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/choir_aahs-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/cello-mp3',
+  'https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy/church_organ-mp3',
 ];
 
 // White keys (midi note, octave, txt note, actual note)
@@ -119,19 +122,30 @@ const chords = [
 const notes_list = ['C','D','E','F','G','A','B','C#','D#','E#','F#','G#','A#','Db','Eb','Gb','Ab','Bb'];
 
 let playing = false;
+let page_loaded = false;
 let zoom = 1;
 let octave_shift = 0;
-let input_chords, player, delayed_chord_change_actions;
-let delayers = [];
+let input_chords, player;
 let audiofiles = [];
 let as = [];
 
+let delayers = [];
+let delayed_chord_change_actions, cookie_delayer;
+
+let new_session = 'turbo_session';
+let session_cookie = new_session;
+let input, inversions, bpc, humanize;
+let instrument = instruments[0];
+
+let loaded_session = null;
+
+
 // Get raw data from some known URLs
-// I haven't even tested these laoh
 instruments.forEach((inst, i) => {
   if(inst.indexOf('github.com') > -1){
     instruments[i] = inst.replace('github.com', 'raw.githubusercontent.com').replace('tree/', '');
   }
+  // Haven't tested this laoh
   if(inst.indexOf('dropbox.com') > -1){
     instruments[i] = inst.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('dl=0', 'raw=1').replace('dl=1', 'raw=1');
   }
@@ -148,6 +162,46 @@ function fail(el, msg) {
     $(el).append(`<div class="warn"></div>`);
   }
   $(el).find('.warn').append(`<div>${msg}</div>`);
+}
+
+// Random int
+function rand_int(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Loader
+let wobble_interval; let load_timers = [];
+let site_loaded = false;
+function wobbly_loader(finish=false, wobble=false){
+  let loader = '.site_loader .bar';
+  let finish_speed = 300;
+  $(loader.split(' ')[0]).css('opacity', 1);
+  if(finish){
+    $(loader).stop().animate({'width': '100%'}, finish_speed);
+    setTimeout(function(){
+      $(loader.split(' ')[0]).css('opacity', 0);
+      // Additional <loading_finished> actions here
+    }, finish_speed);
+    return;
+  }
+  $(loader).css('width', 0);
+  if(wobble){
+    wobble_interval = setInterval(function(i){
+      $(loader).stop().animate({'width': '65%'}, rand_int(3000, 7000), 'easeInOutCubic');
+    }, 2000);
+    load_timers[0] = setTimeout(function(){
+      if(!site_loaded) {
+        wobble_interval = setInterval(function(i){
+          $(loader).stop().animate({'width': '99%'}, rand_int(6000, 16000), 'easeInOutCubic'); 
+        }, 3000);
+      }
+    }, 3000);
+  } else {
+    $(loader).stop().animate({'width': '100%'}, 4000, 'easeInOutCubic');
+  }
+  load_timers[1] = setTimeout(() => { wobbly_loader(true) }, 3000);
 }
 
 // Cycle values of a button
@@ -194,7 +248,7 @@ function bind_clicks() {
     // Click keyboard
     $(this).find('.clickable').unbind().click(function(){
       // Humanize?
-      let humanize = $('#humanize').is(':checked');
+      humanize = $('#humanize').is(':checked');
 
       // Clear warnings
       clear_fails();
@@ -241,7 +295,7 @@ function bind_clicks() {
       }, 2);
 
       });
-  });
+  }); // .kb
 
   // Click Play button
   $('#play').unbind().click(function(){
@@ -263,7 +317,7 @@ function bind_clicks() {
   $('#bpm').unbind().click(function(){
     if(player) clearInterval(player);
     bpm = cycle_values('#bpm');
-    Cookies.set('bpm', bpm);
+    construct_cookie(session_cookie);
     if(playing) loop_chords();
     $(this).blur();
   });
@@ -272,7 +326,7 @@ function bind_clicks() {
   $('#bpc').unbind().click(function(){
     if(player) clearInterval(player);
     loop_bar = cycle_values('#bpc');
-    Cookies.set('bpc', loop_bar);
+    construct_cookie(session_cookie);
     if(playing) loop_chords();
     $(this).blur();
   });
@@ -284,6 +338,139 @@ function bind_clicks() {
     bind_clicks();
   });
 
+  $('#new').unbind().click(function(){
+    reset();
+  });
+
+  // Load session from cookie
+  $('#load').unbind().click(function(){
+
+    if($('#open_session').length){
+      $('#open_session').remove();
+    } else {
+      // List sessions
+      let saved_sessions = [];
+      for (const [name, content] of Object.entries(Cookies.get())) {
+        if(name.indexOf('sess_') > -1) saved_sessions.push(name);
+      }
+      // Create menu
+      $(this).after('<div id="open_session"></div>');
+      saved_sessions.forEach(session_name => {
+        const name = session_name.replace('sess_', '');
+        $('#open_session').append(`<div class="sess" data-session="${name}"><div class="name">${name}</div><div class="delete icon"><i class="fa-solid fa-trash"></i></div></div>`);
+      });
+      $('#open_session .sess').unbind().click(function(e) {
+        let handle_session = $(this).data('session');
+        if($(e.target).hasClass('delete') || $(e.target).parent().hasClass('delete')){
+          Cookies.remove(`sess_${handle_session}`, { path: '/' });
+          // Delete session
+          $(this).remove();
+        } else {
+          // Load session
+          loaded_session = $(this).data('session');
+          auto_adjust(load_session(`sess_${loaded_session}`));
+          $('#open_session').remove();
+          $('#new').removeClass('hidden');
+          info(`Loaded session <b>${loaded_session}</b>`);
+        }
+      });
+    }
+    // Hide Open menu on click outside
+    $(document).mouseup(function(e) {
+      var container = $('#open_session .sess');
+      if (!container.is(e.target) && container.has(e.target).length === 0) {
+        $('#open_session').remove();
+        $(document).unbind('mouseup');
+      }
+    });
+
+  });
+
+  // Save session
+  $('#save').unbind().click(function(){
+    if(loaded_session){
+      // Overwrite loaded session
+      construct_cookie(`sess_${loaded_session}`);
+    } else {
+      // Save new session
+      $.get('//api.inha.asia/k/', (name) => {
+        info(`Session saved as <b>${name}</b>`);
+        construct_cookie(`sess_${name}`);
+      });
+    }
+  });
+
+  // Display info when session loaded
+  if(loaded_session){
+    $('#save').mouseenter(() => {
+      info(`Overwriting session <b>${loaded_session}</b>`, 'inf');
+    }).mouseleave(() => {
+      hide_info();
+    });
+    $('#load').mouseenter(() => {
+      info(`Current session: <b>${loaded_session}</b>`, 'inf');
+    }).mouseleave(() => {
+      hide_info();
+    })
+  }
+
+} // bind_clicks()
+
+// Clean slate and reset all to defaults
+function reset(){
+  loaded_session = null;
+  session_cookie = new_session;
+  humanize = true;
+  bpm = 120;
+  bpc = 1;
+  instrument = instruments[0];
+  octave_shift = 0;
+  input = '';
+  inversions = '';
+  $('#humanize').prop('checked', humanize);
+  $('#bpm').find('.value').html(bpm);
+  $('#bpc').find('.value').html(bpc);
+  $('#instrument').val(instrument);
+  load_instrument(instrument);
+  $('#octave').find('.value').html(octave_shift);
+  change_octave(octave_shift);
+  $('#chords').val(input).trigger('keyup');
+}
+
+// Auto-config UI
+function auto_adjust([humanize, bpm, bpc, instrument, octave_shift, input, inversions]) {
+  if(instrument) {
+    load_instrument(instrument);
+    $('#instrument').val(instrument);
+  }
+  if(humanize == 'true') $('#humanize').prop('checked', true);
+  if(bpm) $('#bpm').find('.value').html(bpm);
+  if(bpc) {
+    loop_bar = bpc;
+    $('#bpc').find('.value').html(loop_bar);
+  }
+  if(octave_shift) {
+    $('#octave').find('.value').html(octave_shift);
+    change_octave(octave_shift);
+  }
+  if(input) $('#chords').val(input).trigger('keyup');
+  if(inversions) {
+    let inversion_per_kb = inversions.split('|');
+    inversion_per_kb.forEach(function(inv, i){
+      let [kb, inversion] = inv.split(':');
+      let direction = parseInt(inversion) < 0 ? '.down' : '.up';
+      delayers[delayers.length+1] = setTimeout(() => {
+        for(i=0; i<Math.abs(parseInt(inversion)); i++){
+          $(`.kb[data-index="${kb}"] .tools`).find(`${direction}`).click();
+        }
+      }, 1000);
+    });
+  }
+}
+
+// Get session to vars
+function load_session(cookie=session_cookie) {
+  if(Cookies.get(cookie)) return Cookies.get(cookie).split(';');
 }
 
 // Change octave
@@ -291,7 +478,8 @@ function change_octave(oct){
   $('.kb').each(function(){
     $(this).data('octave-shift', oct);
   });
-  Cookies.set('octave_shift', oct);
+  octave_shift = oct;
+  construct_cookie(session_cookie);
 }
 
 // Play function
@@ -364,16 +552,19 @@ function generate_chord_list(html=false) {
 }
 
 // Load instrument from select menu
-function load_instrument(instrument) {
+function load_instrument(load_instrument) {
+  wobbly_loader();
   let octaves = [1, 2, 3, 4, 5, 6, 7]; // Octaves to load
   $('audio').remove();
   notes_list.forEach((note) => { 
     if(note.indexOf('#') == -1) {
       octaves.forEach((oct) => {
-        $('body').prepend(`<audio id="sound-${note}${oct}" src="${instrument}/${note}${oct}.mp3" preload="auto">`);
+        $('body').prepend(`<audio id="sound-${note}${oct}" src="${load_instrument}/${note}${oct}.mp3" preload="auto">`);
       });
     } 
   });
+  instrument = load_instrument;
+  return load_instrument;
 }
 
 // Midi note (int) to regular note ("C4")
@@ -383,7 +574,6 @@ function midi_to_note(midi_note) {
   [_, oct, __, note_d] = matches;
   note_d = note_d.indexOf('/') > -1 ? note_d.split('/')[1] : note_d;
   return note_d+oct;
-
 }
 
 // Regular note ("C4") to midi note (int)
@@ -432,6 +622,7 @@ function cycle_inversion(el, notes, direction='down') {
 
   // Inversion direction
   let inversion = parseInt(el.find('.tools').data('inversion')) + (direction=='down' ? -1 : 1);
+  let kb_index = el.data('index');
 
   // Do it
   notes.forEach((note, i) => { notes[i] = parseInt(note); });
@@ -442,7 +633,6 @@ function cycle_inversion(el, notes, direction='down') {
     }
   });
   if(Math.min(...notes) < min || Math.max(...notes) > max) return;
-
   el.find('.tools').data('inversion', inversion);
 
   // Button styles
@@ -455,14 +645,25 @@ function cycle_inversion(el, notes, direction='down') {
 
   update_keys(el, notes);
   bind_clicks();
+  construct_cookie(session_cookie);
+}
+
+function update_inversions() {
+  let update_inversions = [];
+  $('.kb').each(function(){
+    update_inversions.push($(this).data('index')+':'+$(this).find('.tools').data('inversion'));
+  });
+  inversions = update_inversions.join('|');
+  return inversions;
 }
 
 // Fix CSS styling, notably keyboard sizes when DOM or window changes
 function fix_style(current_zoom) {
 
-  let cols = 2;                           // Default cols
-  if($(window).width() < 768) cols = 1;   // Mobile cols
-  if($(window).width() > 1400) cols = 3;  // Large screen cols
+  // Default = 2 cols, mobile = 1 col, large screen = 3 cols
+  let cols = 2;
+  if($(window).width() < mobile) cols = 1;
+  if($(window).width() > large_screen) cols = 3;
 
   let w = $('body').width();
   let margin = 20;
@@ -480,15 +681,48 @@ function fix_style(current_zoom) {
   return zoom;
 }
 
+// Hide info message
+let info_delayer;
+function hide_info() {
+  if(info_delayer) clearTimeout(info_delayer);
+  info_delayer = setTimeout(() => {
+    $('.info').html('').removeClass('active');
+  }, 10);
+}
+
+// Display info message
+function info(msg, delay=4, type='info'){
+  $('.info').addClass('active');
+  setTimeout(() => {
+    $('.info').html(msg);
+  }, 100);
+  if(!isNaN(delay)){
+    setTimeout(() => {
+      hide_info();
+    }, delay*1000);
+  }
+}
+
+// Fetch session details and save to cookie
+function construct_cookie(cookie=session_cookie) {
+  if(cookie_delayer) clearTimeout(cookie_delayer);
+  cookie_delayer = page_loaded ? setTimeout(() => {
+    humanize = $('#humanize').is(':checked');
+    bpm = $('#bpm').find('.value').text();
+    bpc = $('#bpc').find('.value').text();
+    instrument = $('#instrument').val();
+    octave_shift = $('#octave').find('.value').text();
+    input = $('#chords').val();
+    inversions = update_inversions();
+    let cookie_value = [humanize, bpm, bpc, instrument, octave_shift, input, inversions].join(';');
+    Cookies.set(cookie, cookie_value);
+  }, 2000) : null;
+}
+
 $(document).ready(function(){
 
-  // Check cookies for previous session
-  let pre_humanize = Cookies.get('humanize')
-  let pre_input = Cookies.get('last_input');
-  let pre_bpm = Cookies.get('bpm');
-  let pre_bpc = Cookies.get('bpc');
-  let pre_instrument = Cookies.get('instrument');
-  let pre_octave_shift = Cookies.get('octave_shift');
+  wobbly_loader();
+  if(input) $('#chords').val(input);
 
   // Create white keys and audiofile filenaming scheme
   nw.forEach((k, i) => {
@@ -525,6 +759,11 @@ $(document).ready(function(){
     }
   });
 
+  // Restore last session
+  if(Cookies.get(session_cookie)){
+    [humanize, bpm, bpc, instrument, octave_shift, input, inversions] = load_session(session_cookie);
+  }
+
   // Change input field
   let input_chords = [];
   $('#chords').keyup(function(){
@@ -532,18 +771,18 @@ $(document).ready(function(){
     // Get octave shift
     octave_shift = parseInt($('#octave').find('.value').text());
 
-    // Trim input field
-    $(this).val($('#chords').val().replace('  ', ' '));
-
     // Stop things that should not be happening rn
     if(player) clearInterval(player);
     if(delayed_chord_change_actions) clearInterval(delayed_chord_change_actions);
 
     // Split input to chords
-    let input = $(this).val().replaceAll('  ', ' ');
+    input = $(this).val().replaceAll('  ', ' ');
 
-    // Set to cookie
-    Cookies.set('last_input', input);
+    // Remove all chords if input is empty
+    if(input == '' || !input) {
+      $('.kb').remove();
+      return;
+    }
 
     // Process input
     input_chords = input.split(' ');
@@ -590,12 +829,11 @@ $(document).ready(function(){
               $(`.${kb_id}`).data('chord', full_chord);
             }
           } else {
-            $('.kbs').append(`<div class="kb ${kb_id}" data-chord="${full_chord}" data-octave-shift="${octave_shift}" style="zoom:${zoom};">${tpl}</div>`);
+            $('.kbs').append(`<div class="kb ${kb_id}" data-index="${i}" data-chord="${full_chord}" data-octave-shift="${octave_shift}" style="zoom:${zoom};">${tpl}</div>`);
             $(`.${kb_id}`).data('chord', full_chord);
             update_keys($(`.${kb_id}`), notes);
           }
         }
-
       });
 
       // Remove obsolete keyboards
@@ -607,53 +845,37 @@ $(document).ready(function(){
     zoom = fix_style(zoom);
 
     // Bind keyboard click and possibly resume play
+    if(delayed_chord_change_actions) clearTimeout(delayed_chord_change_actions)
     delayed_chord_change_actions = setTimeout(() => {
+      construct_cookie(session_cookie);
       bind_clicks();
       if(playing) loop_chords();
-    }, 500);
+    }, 200);
 
   });
 
+  // Adjust UI according to session
+  auto_adjust(load_session(session_cookie));
+
+  // onChange events
   $('select#instrument').change(function(){
-    load_instrument($(this).val());
+    instrument = load_instrument($(this).val());
     $(this).blur();
   });
-
-  // Preload instrument
-  load_instrument(pre_instrument ? pre_instrument : instruments[0]);
-
-  // Store & restore sessions using cookies
   $('select#instrument').change(function(){
-    Cookies.set('instrument', $(this).val());
+    instrument = $(this).val();
+    construct_cookie(session_cookie);
   });
   $('#humanize').change(function(){
-    Cookies.set('humanize', $('#humanize').is(':checked'));
+    humanize = $('#humanize').is(':checked');
+    construct_cookie(session_cookie);
   });
-  if(pre_humanize == 'true') $('#humanize').prop('checked', true);
-  if(pre_input) $('#chords').val(pre_input).trigger('keyup');
-  if(pre_bpm) {
-    bpm = pre_bpm;
-    $('#bpm').find('.value').html(pre_bpm);
-  }
-  if(pre_bpc) {
-    loop_bar = pre_bpc;
-    $('#bpc').find('.value').html(loop_bar);
-  }
-  if(pre_instrument) {
-    $('#instrument').val(pre_instrument);
-  }
-  if(pre_octave_shift) {
-    octave_shift = parseInt(pre_octave_shift);
-    $('#octave').find('.value').html(octave_shift);
-    change_octave(octave_shift);
-  }
 
-  // Bind keyboard click and possibly resume play
-  delayed_chord_change_actions = setTimeout(() => {
+  // Delay binding clicks
+  delayers[delayers.length+1] = setTimeout(() => {
     bind_clicks();
-    zoom = fix_style(zoom);
-    $('#chords').trigger('keyup');
-  }, 500);
+    page_loaded = true;
+  }, 2000);
 
 });
 
