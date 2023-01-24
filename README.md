@@ -7,7 +7,7 @@ Live demo: [https://ki.gy/cv](https://ki.gy/cv)
 ### Features:
 - Visualize textual chords / chord progressions
 - Click chord visualization to hear audio preview
-- Chord inversion (click up/down arrows per chord visualization)
+- Chord inversion cycling
 - Humanize the audio preview
 - Instrument selection for the audio preview
 - Octave shift for the audio preview
