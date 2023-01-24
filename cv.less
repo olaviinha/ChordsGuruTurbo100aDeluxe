@@ -1,8 +1,12 @@
 :root {
-  --color-base: #ddd;
+  
+  --color-black: #111;
+  --color-dark: #444;
   --color-dim: #666;
-  --color-link: rgb(133, 179, 244);
+  --color-base: #ddd;
   --color-hit: #fff;
+  --color-link: rgb(133, 179, 244);
+  
   --txt-size: 16px;
   --fade-duration: 3s;
   --radius: 2px;
@@ -21,7 +25,7 @@
 
 body {
   font-family: Arial;
-  background: #111;
+  background: var(--color-black);
   color: var(--color-base);
   font-size: var(--txt-size);
   margin: 0;
@@ -85,7 +89,7 @@ input[type="checkbox"] {
     position: relative;
     width: 0;
     height: 100%;
-    background: var(--color-dim);
+    background: var(--color-dark);
   }
 }
 
@@ -120,6 +124,10 @@ select {
 .inputs {
   display: flex;
   align-items: baseline;
+  position: relative;
+  * {
+    z-index: 2;
+  }
   input, .tools {
     width: auto;
   }
@@ -159,7 +167,7 @@ select {
       min-width: 250px;
       // padding: 10px;
       margin-right: 10px;
-      background: var(--color-dim);
+      background: var(--color-dark);
       box-shadow: var(--shadow-light);
       div {
         padding: 5px 10px;
@@ -175,7 +183,7 @@ select {
           padding-bottom: 10px;
         }
         &:hover {
-          background: #999;
+          background: var(--color-dim);
         }
         .icon {
           // position: relative;
@@ -302,4 +310,54 @@ select {
     box-shadow: 0 0 0 0 var(--color-hit);
     transition: box-shadow var(--fade-duration);
   }
+}
+
+.autocomplete-helper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  .pre {
+    position: relative;
+    opacity: 0;
+    display: inline;
+    padding: 10px 5px;;
+    font-size: 16px;
+  }
+  #faux {
+    padding: 0;
+    position: relative;
+    top: 21px;
+    left: -5px;
+    opacity: 0;
+    width: 240px;
+    display: inline;
+  }
+}
+
+.ui-autocomplete {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  background: var(--color-base);
+  color: var(--color-dim);
+  // 
+  width: 240px;
+  height: 300px;
+  overflow-y: auto;
+  z-index: 5;
+  li {
+    padding: 5px 10px;
+    cursor: pointer;
+    &:hover {
+      color: var(--color-black);
+    }
+    &:first-child {
+      padding-top: 0;
+    }
+  }
+}
+
+.ui-helper-hidden-accessible {
+  display: none;
 }
