@@ -7,7 +7,7 @@ Live demo: [https://ki.gy/cv](https://ki.gy/cv)
 ### Features:
 - Visualize textual chords / chord progressions.
 - Autocomplete from over 800 chords while typing.
-- Full chord inversion cycling.
+- Full chord inversion cycling (of any chord).
 - Click chord visualization to hear audio preview.
 - Humanize the audio preview.
 - Instrument selection for the audio preview.
