@@ -377,6 +377,7 @@ function bind_clicks() {
           Cookies.remove(`sess_${handle_session}`, { path: '/' });
           // Delete session
           $(this).remove();
+          bind_clicks();
         } else {
           // Load session
           loaded_session = $(this).data('session');
@@ -399,9 +400,10 @@ function bind_clicks() {
   });
 
   // Save session
-  $('#save').unbind().click(function(){
+  $('#save').unbind('click').click(function(){
     if(loaded_session){
       // Overwrite loaded session
+      info(`Changes saved to <b>${loaded_session}</b>`);
       construct_cookie(`sess_${loaded_session}`);
     } else {
       // Save new session
