@@ -364,6 +364,9 @@ function bind_clicks() {
       }
       // Create menu
       $(this).after('<div id="open_session"></div>');
+      if(saved_sessions.length == 0){
+        $('#open_session').css('padding', '10px').html('You have not saved anything yet. Note that all sessions are saved to cookies of your current browser in your current device.');
+      }
       saved_sessions.forEach(session_name => {
         const name = session_name.replace('sess_', '');
         $('#open_session').append(`<div class="sess" data-session="${name}"><div class="name">${name}</div><div class="delete icon"><i class="fa-solid fa-trash"></i></div></div>`);
@@ -549,7 +552,7 @@ function loop_chords(){
 function generate_chord_list(html=false) {
   let chord_list = []
   chords.forEach((c) => {
-    if(c[0].indexOf('sharp') == -1){
+    if(c[0].indexOf('sharp') == -1){ // Use the masks "#" rather than "sharp"
       unique_notes.forEach((n) => {
         if(n.indexOf('/') > -1){
           [n1, n2] = n.split('/');
@@ -561,17 +564,15 @@ function generate_chord_list(html=false) {
       });
     }
   });
-
   if(html===false){
     return chord_list;
   } else {
     let html = `<select class="chord_list">`;
-    html += `<option>Add new</option>`;
+    html += `<option>Select chord</option>`;
     chord_list.forEach((c) => { html += `<option value="${c}">${c}</option>`; });
     html += `</select>`;
     return html;
   }
-
 }
 
 // Load instrument from select menu
