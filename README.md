@@ -17,7 +17,7 @@ Live demo: [https://ki.gy/cv](https://ki.gy/cv)
 - Save and load chord progressions (**NOTE** that sessions are stored in your browser's cookies, so don't expect them to be stored forever).
 
 ### Also:
-- Add or replace instrument from any URL or directory path (e.g. copy-paste URL from [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy), [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FluidR3_GM) or [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/MusyngKite)) to the instruments list in `cv.js`.
+- Add or replace instrument from any URL or directory path (e.g. copy-paste any of the *-mp3 URLs from [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FatBoy), [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/FluidR3_GM) or [here](https://github.com/gleitz/midi-js-soundfonts/tree/gh-pages/MusyngKite)) to the instruments list in `cv.js`.
 
 Demo instruments are from [FatBoy](https://web.archive.org/web/20220124174052/https://fatboy.site/) (deprecated) via [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts/)
 
