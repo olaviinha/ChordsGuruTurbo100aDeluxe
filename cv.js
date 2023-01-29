@@ -8,7 +8,7 @@ let default_fadeout = 300;      // Default fadeout (swing easing) time (ms) of t
 let autocomplete = true;        // Autocomplete chords
 let mobile = 768;               // Breakpoint for 1 col
 let large_screen = 1800;        // Breakpoint for 3 cols
-let include_inversions = false; // Include inversion per chord in chords input field
+let include_inversions = false;  // Include inversion per chord in chords input field
 
 // Instrument paths (Any URL or directory paths that contain C3.mp3, Db3.mp3, etc.)
 let instruments = [
@@ -512,7 +512,7 @@ function bind_interactions() {
   // Bind physical keyboard: spacebar = play/pause; qwerty = play chords
   $(document).unbind('keydown').keydown(function(e){
     if(!$('#chords:focus').length){
-      if(e.code == 'Slash') toggle_python_view();
+      if(e.code == 'Slash' && !loading) toggle_python_view();
       if(e.code == 'Space') $('#play').click();
       shortcuts.split('').forEach((key, i) => {
         if(e.code == `Key${key.toUpperCase()}`) {
@@ -1090,9 +1090,16 @@ function toggle_python_view() {
   } else {
     let input_chords = $('#chords').val().split(' ');
     html = `chords = [\n`;
-    input_chords.forEach(inp => {
-      if(inp != ''){
-        html += `    '${inp}',\n`;
+    input_chords.forEach((inp, i) => {
+      if(!include_inversions){
+        let inv = $(`.kb[data-index="${i}"]`).find('.tools').data('inversion');
+        if(inp != ''){
+          html += `  '${inp}:${inv}',\n`;
+        }  
+      } else {
+        if(inp != ''){
+          html += `    '${inp}',\n`;
+        }
       }
     })
     html += `]`;
