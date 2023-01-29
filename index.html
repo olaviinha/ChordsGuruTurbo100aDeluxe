@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
   <title>Chords Guru Turbo 100a Deluxe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="stylesheet/less" type="text/css" href="cv.less" />
   <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/3.9.0/less.min.js" ></script>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -17,12 +18,13 @@
   <div class="site_loader"><div class="bar"></div></div>
 
   <div class="inputs">
-    <input type="text" id="chords" placeholder="Input textual chords here">
+    <input type="text" id="chords" placeholder="Type some chords here, e.g. A - C - D#7#5#9 - G#mmaj7b5 - Dm - E">
     <div class="autocomplete-helper">
       <div class="pre"></div><input type="text" id="faux">
     </div>
     <div class="info"></div>
-    <div class="tools">
+
+    <div class="tools desktop-only">
       <button id="save"><i class="fa-solid fa-floppy-disk"></i></button>
       <button id="load"><i class="fa-solid fa-folder-open"></i></button>
       <button id="new" class="hidden"><i class="fa-solid fa-file-circle-plus"></i></button>
@@ -32,13 +34,30 @@
   <div class="toolbar">
     
     <select id="instrument"></select>
-    &nbsp;&nbsp;
-    <input type="checkbox" id="humanize" checked><label for="humanize">Humanize</label>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    Octave shift <button class="textual" id="octave" data-values="-1,0,+1"><span class="value">0</span></button>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    
+    <span class="desktop-only">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <span class="mobile-only br"></span>
+
+    <span class="mobile-align-left">
+      <input type="checkbox" id="humanize" checked><label for="humanize">Humanize</label>
+    </span>
+
+    <span class="desktop-only">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <span class="mobile-only">&nbsp;&nbsp</span>
+
+    <input type="checkbox" id="play_pedal"><label for="play_pedal">Pedal</label>
+
+    <span class="desktop-only">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+
+    <span class="mobile-align-right">
+      Octave <span class="desktop-only">shift</span> <button class="textual" id="octave" data-values="-1,0,+1"><span class="value">0</span></button>
+    </span>
+    
+    <span class="desktop-only">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <span class="mobile-only br clear"></span>
+
     <input type="checkbox" id="play"><label for="play">Play</label>
-    each chord for 1 bar
+    <span class="desktop-only">each chord for 1 bar</span>
     <button class="textual" id="bpc" data-values="1,2,4"><span class="value">1</span> time(s) <i class="fa fa-recycle" aria-hidden="true"></i></button>
     at
     <button class="textual" id="bpm" data-values="60,90,120,160,200,250,300"><span class="value">120</span> bpm <i class="fa fa-recycle" aria-hidden="true"></i></button>
@@ -47,13 +66,15 @@
 
   <div class="tpl">
     <div class="clickable"></div>
-    <div class="tools" data-inversion="0"></div>
+    <div class="tools" data-inversion="0">
+      <button class="down"><i class="fas fa-arrow-down"></i></button><button class="up"><i class="fas fa-arrow-up"></i></button>
+    </div>
   </div>
 
   <div class="kbs"></div>
 
   <div class="all-chords"></div>
-
+  <textarea class="python"></textarea>
   <script src="cv.js"></script>
 
 </body>
