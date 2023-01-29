@@ -8,7 +8,7 @@ let default_fadeout = 300;      // Default fadeout (swing easing) time (ms) of t
 let autocomplete = true;        // Autocomplete chords
 let mobile = 768;               // Breakpoint for 1 col
 let large_screen = 1800;        // Breakpoint for 3 cols
-let include_inversions = false;  // Include inversion per chord in chords input field
+let include_inversions = false; // Include inversion per chord in chords input field
 
 // Instrument paths (Any URL or directory paths that contain C3.mp3, Db3.mp3, etc.)
 let instruments = [
@@ -532,7 +532,6 @@ function reset(session_only=false){
   session_cookie = new_session;
   input = '';
   inversions = '';
-  $('#chords').val(input).trigger('keyup');
   if(session_only) {
     bind_interactions();
     return;
@@ -551,6 +550,7 @@ function reset(session_only=false){
   $('#octave').find('.value').html(octave_shift);
   change_octave(octave_shift);
   $('#play_pedal').prop('checked', play_pedal).trigger('change');
+  $('#chords').val(input).trigger('keyup');
   bind_interactions();
 }
 
