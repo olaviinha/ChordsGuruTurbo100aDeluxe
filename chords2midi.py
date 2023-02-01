@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Prerequisites:
+# pip install pychord mido
+
 import os
 import sys
 import argparse
