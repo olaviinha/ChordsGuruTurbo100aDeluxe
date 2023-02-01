@@ -11,7 +11,7 @@ from mido import Message, MidiFile, MidiTrack, MetaMessage
 def main(arguments):  
 
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--chords', help="Chords", type=str)
+    parser.add_argument('--chords', help="Chords as midi notes in format \"60,62|70,73|80,82,84\"", type=str)
     parser.add_argument('--cpb', help="Play per chord", default=1, type=int)
     parser.add_argument('--bpm', help="BPM", default=120, type=int)
     parser.add_argument('--humanize', help="Humanize", default=None)
