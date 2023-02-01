@@ -4,10 +4,14 @@ Webapp for simple visualization and audio previewing of textual chord progressio
 
 Live demo: [https://ki.gy/cv](https://ki.gy/cv)
 
+<img width="1099" alt="image" src="https://user-images.githubusercontent.com/50331907/216043200-f4c648d2-492c-4910-bedd-8980a23519b6.png">
+
+
 ### Features:
 - Visualize textual chords / chord progressions.
 - Autocomplete from over 800 chords while typing.
 - Full chord inversion cycling (of any chord).
+- Export chord progression as a MIDI file.
 - Click chord visualization to hear audio preview.
 - Humanize the audio preview.
 - Instrument selection for the audio preview.
@@ -23,4 +27,8 @@ Demo instruments are from [FatBoy](https://web.archive.org/web/20220124174052/ht
 
 ---
 
-![image](https://user-images.githubusercontent.com/50331907/214382008-8243d044-1cc8-4dd5-9ad7-a0f8e18c9fca.png)
+`chords2midi.py` can be used to save the chord progression as a MIDI file. It accepts all Chords Guru Turbo 100a Deluxe options as paremeters. Chords need to be given as comma-separated strings of MIDI notes separated by pipes (`--chords "60,63|74,77,79"`). Live demo uses a web API for chords2midi.py.
+
+
+
+
