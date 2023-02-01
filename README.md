@@ -2,7 +2,7 @@
 
 <img width="1099" alt="image" src="https://user-images.githubusercontent.com/50331907/216043200-f4c648d2-492c-4910-bedd-8980a23519b6.png">
 
-Webapp for simple visualization and audio previewing of textual chord progressions.
+Web app for simple visualization, audio previewing and MIDI exportation of textual chord progressions.
 
 Live demo: [https://ki.gy/cv](https://ki.gy/cv)
 
