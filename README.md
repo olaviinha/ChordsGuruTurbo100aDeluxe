@@ -11,7 +11,7 @@ Live demo: [https://ki.gy/cv](https://ki.gy/cv)
 - Autocomplete from over 800 chords while typing.
 - Full chord inversion cycling (of _any_ chord).
 - Full chord transposition cycling.
-- Export chord progression as a MIDI file (drag-n-drop ready for DAW).
+- Export chord progression as a MIDI file (drag-n-drop-ready for DAW).
 - Click chord visualization to hear audio preview.
 - Humanize the audio preview.
 - Instrument selection for the audio preview.
