@@ -31,7 +31,7 @@ Demo instruments are from [FatBoy](https://web.archive.org/web/20220124174052/ht
 
 ---
 
-`chords2midi.py` is a bonus utility that can be used to save a chord progression from the web app as MIDI file. It accepts all Chords Guru Turbo 100a Deluxe options as paremeters. Press <kbd>.</kbd> in the web app to reveal full command to save your current work as midi. The [online demo](https://ki.gy/cv) uses a web API for chords2midi.py, so you can directly use the web app's own [Export MIDI file] button instead of using this utility.
+`chords2midi.py` is a bonus utility that can be used to save a chord progression from the web app as a MIDI file. It accepts all Chords Guru Turbo 100a Deluxe options as paremeters. Press <kbd>.</kbd> in the web app to reveal full command to save your current work as MIDI. Note that the [online demo](https://ki.gy/cv) uses a REST API to run `chords2midi.py`, thus providing a direct MIDI download via [Export MIDI file] button.
 
 
 
