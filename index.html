@@ -25,9 +25,10 @@
     <div class="info"></div>
 
     <div class="tools desktop-only">
-      <button id="save"><i class="fa-solid fa-floppy-disk"></i></button>
-      <button id="load"><i class="fa-solid fa-folder-open"></i></button>
-      <button id="new" class="hidden"><i class="fa-solid fa-file-circle-plus"></i></button>
+      <button id="save" alt="Save session to your browser"><i class="fa-solid fa-floppy-disk"></i></button>
+      <button id="load" alt="Load session from your browser"><i class="fa-solid fa-folder-open"></i></button>
+      <button id="export" alt="Export MIDI file"><i class="fa-solid fa-file-export"></i></button>
+      <button id="new" class="hidden" alt="New session"><i class="fa-solid fa-file-circle-plus"></i></button>
     </div>
   </div>
 
@@ -45,7 +46,7 @@
     <span class="desktop-only">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
     <span class="mobile-only">&nbsp;&nbsp</span>
 
-    <input type="checkbox" id="play_pedal"><label for="play_pedal">Pedal</label>
+    <input type="checkbox" id="play_pedal"><label for="play_pedal">Pedal note</label>
 
     <span class="desktop-only">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
 
@@ -60,20 +61,30 @@
     <span class="desktop-only">each chord for 1 bar</span>
     <button class="textual" id="bpc" data-values="1,2,4"><span class="value">1</span> time(s) <i class="fa fa-recycle" aria-hidden="true"></i></button>
     at
-    <button class="textual" id="bpm" data-values="60,90,120,160,200,250,300"><span class="value">120</span> bpm <i class="fa fa-recycle" aria-hidden="true"></i></button>
+
+    <!-- <button class="textual" id="bpm" data-values="60,90,120,160,200,250,300"><span class="value">120</span> bpm <i class="fa fa-recycle" aria-hidden="true"></i></button> -->
+    <button class="textual" id="bpm"><span class="value">120</span> bpm</button>
 
   </div>
 
   <div class="tpl">
-    <div class="clickable"></div>
-    <div class="tools" data-inversion="0">
-      <button class="down"><i class="fas fa-arrow-down"></i></button><button class="up"><i class="fas fa-arrow-up"></i></button>
+    <div class="clickable" style="zoom:1;"></div>
+    <div class="tools" data-inversion="0" data-transposition="0">
+      <div class="inverse">
+        Inverse
+        <button class="down"><i class="fas fa-arrow-down"></i></button><button class="up"><i class="fas fa-arrow-up"></i></button>
+      </div>
+      <div class="transpose">
+        Transpose
+        <button class="down"><i class="fas fa-arrow-down"></i></button><button class="up"><i class="fas fa-arrow-up"></i></button>
+      </div>
     </div>
   </div>
 
   <div class="kbs"></div>
 
   <div class="all-chords"></div>
+  <input type="text" id="c2m">
   <textarea class="python"></textarea>
   <script src="cv.js"></script>
 
