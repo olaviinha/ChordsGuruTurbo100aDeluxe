@@ -1,14 +1,16 @@
 
 // Defaults
-let humanization = 60;          // Each note starts to play within this many milliseconds
-let bpm = 120;                  // Default BPM
-let loop_bar = 1;               // Default count how many times each chord plays/repeats when Play active
-let default_octave = 3;         // Default octave
+let humanization = 60;          // Each note starts to play within this many milliseconds.
+let bpm = 120;                  // Default BPM.
+let loop_bar = 1;               // Default count how many times each chord plays/repeats when Play active.
+let default_octave = 3;         // Default octave.
 let default_fadeout = 300;      // Default fadeout (swing easing) time (ms) of the previous chord when you play a new chord.
-let autocomplete = true;        // Autocomplete chords
-let mobile = 768;               // Breakpoint for 1 col
-let large_screen = 1800;        // Breakpoint for 3 cols
-let include_inversions = false; // Include inversion per chord in chords input field
+let autocomplete = true;        // Autocomplete chords.
+let mobile = 768;               // Breakpoint for 1 col.
+let large_screen = 1800;        // Breakpoint for 3 cols.
+let include_inversions = false; // Include inversion per chord in chords input field.
+let display_all_notes = false;  // Display all notes in keys when hovering a kb long enough.
+let generate_midi_url = 'https://chords2midi.herokuapp.com/'; // Rest API for midi exportation
 
 // Instrument paths (Any URL or directory paths that contain C3.mp3, Db3.mp3, etc.)
 let instruments = [
@@ -165,7 +167,7 @@ const allowed_beginnings = 'ABCDEFG -';
 const all_notes = nw.concat(nb);
 const shortcuts = 'qwertyuiopasdfghjklzxcvbnm';
 
-let input_chords, player, last_chord, current_chord;
+let input_chords, player, last_chord, current_chord, og_kb_width;
 let playing = fading = page_loaded = play_pedal = false;
 let zoom = current_audiospace = same_chord_hits = 0;
 let octave_shift = 0;
@@ -180,7 +182,7 @@ let delayers = [];
 
 let new_session = 'turbo_session';
 let session_cookie = new_session;
-let input, inversions, bpc, humanize;
+let input, inversions, bpc, humanize, transpositions;
 let instrument = instruments[0];
 let loaded_session = null;
 
@@ -287,9 +289,15 @@ function bind_interactions() {
     }
 
     // Inversion cycle buttons
-    $(this).find('button').unbind().click(function(){
+    $(this).find('.tools .inverse button').unbind().click(function(){
       cycle_inversion(parent, midi_notes, $(this).hasClass('down') ? 'down' : 'up');
       inversions = update_inversions(null, true);
+    });
+
+    // Inversion cycle buttons
+    $(this).find('.tools .transpose button').unbind().click(function(){
+      cycle_transposition(parent, midi_notes, $(this).hasClass('down') ? 'down' : 'up');
+      transpositions = update_transpositions(null, true);
     });
 
     // Click keyboard
@@ -380,12 +388,26 @@ function bind_interactions() {
   });
 
   // Click BPM
-  $('#bpm').unbind().click(function(){
-    if(player) clearInterval(player);
-    bpm = cycle_values('#bpm');
-    construct_cookie(session_cookie);
-    if(playing) loop_chords();
-    $(this).blur();
+  $('#bpm').unbind().click(function(e){
+    let val = $(this).find('.value').text();
+    let container = $('#bpm');
+    if(!$(this).find('input').length){
+      $(this).find('.value').after(`<input class="inline bpm" type="text" value="${val}">`);
+      $(this).find('.value').hide();
+      $(this).find('input').select();
+    }    
+    $(this).keyup(function(e) {
+      if(e.code == 'Enter') update_bpm(e);
+    });
+    $(document).mouseup(function(e) {
+      if (!container.is(e.target) && container.has(e.target).length === 0) {
+        update_bpm();
+      }
+    });
+  });
+
+  $(this).keyup(function(e){
+    if(e.code == 'Enter') update_bpm(e);
   });
 
   // Click Bars per Chord
@@ -409,7 +431,6 @@ function bind_interactions() {
     reset();
     $(this).blur();
   });
-
   $('select#instrument').unbind().change(function(){
     instrument = $(this).val();
     load_instrument(instrument);
@@ -427,6 +448,22 @@ function bind_interactions() {
     construct_cookie(session_cookie);
     $(this).blur();
   });
+  $('#export').unbind().click(function(){
+    generate_midi();
+    $(this).blur();
+  });
+
+  if(display_all_notes){
+    let notes_revealer_delayer;
+    $('.kb').unbind().mouseenter(function(){
+      notes_revealer_delayer = setTimeout(() => {
+        $(this).find('.key:not(.down) .details').animate({'opacity': .7}, 2000);
+      }, 3000);
+    }).mouseleave(function(){
+      if(notes_revealer_delayer) clearTimeout(notes_revealer_delayer);
+      $(this).find('.key:not(.down) .details').animate({'opacity': 0}, 1000);
+    });
+  }
 
   // Load session from cookie
   $('#load').unbind().click(function(){
@@ -448,6 +485,7 @@ function bind_interactions() {
         const name = session_name.replace('sess_', '');
         $('#open_session').append(`<div class="sess" data-session="${name}"><div class="name">${name}</div><div class="delete icon"><i class="fa-solid fa-trash"></i></div></div>`);
       });
+      // Load selection
       $('#open_session .sess').unbind().click(function(e) {
         loading = true;
         let handle_session = $(this).data('session');
@@ -513,6 +551,7 @@ function bind_interactions() {
   $(document).unbind('keydown').keydown(function(e){
     if(!$('#chords:focus').length){
       if(e.code == 'Slash' && !loading) toggle_python_view();
+      if(e.code == 'Period' && !loading) toggle_chords2midi_input();
       if(e.code == 'Space') $('#play').click();
       shortcuts.split('').forEach((key, i) => {
         if(e.code == `Key${key.toUpperCase()}`) {
@@ -525,6 +564,17 @@ function bind_interactions() {
   bind_prog_change();
 
 } // bind_interactions()
+
+function update_bpm() {
+  bpm = $('#bpm').find('input').val();
+  $('#bpm').find('.value').text(bpm);
+  $('#bpm').find('input').remove();
+  $('#bpm').find('.value').show();
+  construct_cookie(session_cookie);
+  if(player) clearInterval(player);
+  if(playing) loop_chords();
+  $(document).unbind('mouseup');
+}
 
 // Clean slate and reset all to defaults
 function reset(session_only=false){
@@ -556,7 +606,7 @@ function reset(session_only=false){
 
 // Auto-config UI
 let clicks_delayer;
-function auto_adjust([humanize, bpm, bpc, instrument, octave_shift, input, inversions, play_pedal]) {
+function auto_adjust([humanize, bpm, bpc, instrument, octave_shift, input, inversions, play_pedal, transpositions]) {
 
   if(instrument) {
     load_instrument(instrument);
@@ -581,9 +631,21 @@ function auto_adjust([humanize, bpm, bpc, instrument, octave_shift, input, inver
       let direction = parseInt(inversion) < 0 ? '.down' : '.up';
       delayers[delayers.length+1] = setTimeout(() => {
         for(i=0; i<Math.abs(parseInt(inversion)); i++){
-          $(`.kb[data-index="${kb}"] .tools`).find(`${direction}`).click();
+          $(`.kb[data-index="${kb}"] .tools .inverse`).find(`${direction}`).click();
         }
-      }, 1000);
+      }, 600);
+    });
+  }
+  if(transpositions) {
+    let transposition_per_kb = transpositions.split('|');
+    transposition_per_kb.forEach(function(tra, i){
+      let [kb, transposition] = tra.split(':');
+      let direction = parseInt(transposition) < 0 ? '.down' : '.up';
+      delayers[delayers.length+1] = setTimeout(() => {
+        for(i=0; i<Math.abs(parseInt(transposition)); i++){
+          $(`.kb[data-index="${kb}"] .tools .transpose`).find(`${direction}`).click();
+        }
+      }, 1200);
     });
   }
   if(play_pedal=='true') $('#play_pedal').prop('checked', true).trigger('change');
@@ -754,12 +816,44 @@ function update_keys(el, notes) {
   el.data('audio', new_audio.join(' '));
 }
 
+// Cycle chord transposition up or down
+function cycle_transposition(el, notes, direction='down') {
+
+  // Limit transposition to lowest and highest visible midi note
+  let [min, max] = [60, 96];
+  let kb_id = el.data('index');
+  let transposition = parseInt(el.find('.tools').data('transposition')) + (direction=='down' ? -1 : 1);
+
+  // Update notes
+  notes.forEach((note, i) => { notes[i] = parseInt(note); });
+  notes.forEach((note, i) => {
+    notes[i] = note + (direction=='down' ? -1 : 1);
+  });
+
+  // Update pedal note as well
+  el.data('pedal', parseInt(el.data('pedal')) + (direction=='down' ? -1 : 1)) ;
+
+  if(Math.min(...notes) < min || Math.max(...notes) > max) return;
+  el.find('.tools').data('transposition', transposition);
+
+  // Button styles
+  el.find('.tools .transpose, .tools .transpose button').removeClass('active');
+  if(transposition > 0){
+    el.find('.tools .transpose, .tools .transpose .up').addClass('active');
+  } else if (transposition < 0){
+    el.find('.tools .transpose, .tools .transpose .down').addClass('active');
+  }
+  update_keys(el, notes);
+  bind_interactions();
+  construct_cookie(session_cookie);
+}
+
 // Cycle chord inversion up or down
 let input_update_delayer;
 function cycle_inversion(el, notes, direction='down') {
+
   // Limit inversion to lowest and highest visible midi note
   let [min, max] = [60, 96];
-
   let kb_id = el.data('index');
 
   // If chord exceeds 1 octave, inverse 2 octaves
@@ -783,17 +877,18 @@ function cycle_inversion(el, notes, direction='down') {
   el.find('.tools').data('inversion', inversion);
 
   // Button styles
-  el.find('.tools, .tools button').removeClass('active');
+  el.find('.tools .inverse, .tools .inverse button').removeClass('active');
   if(inversion > 0){
-    el.find('.tools, .up').addClass('active');
+    el.find('.tools .inverse, .tools .inverse .up').addClass('active');
   } else if (inversion < 0){
-    el.find('.tools, .down').addClass('active');
+    el.find('.tools .inverse, .tools .inverse .down').addClass('active');
   }
 
   update_keys(el, notes);
   bind_interactions();
   construct_cookie(session_cookie);
 
+  // Update inversions in input field (deprecated?)
   if(input_update_delayer) clearTimeout(input_update_delayer);
   if(include_inversions){
     input_update_delayer = setTimeout(() => {
@@ -802,6 +897,7 @@ function cycle_inversion(el, notes, direction='down') {
   }
 }
 
+// Get inversions from input field (deprecated?)
 function inversions_from_input() {
   let inputs = $('#chords').val().split(' ');
   inputs.forEach((input, i) => {
@@ -812,6 +908,7 @@ function inversions_from_input() {
   });
 }
 
+// Update inversions string for session
 function update_inversions(key=null, force_update=false) {
   let updated_inversions = [];
   $('.kb').each(function(){
@@ -821,9 +918,19 @@ function update_inversions(key=null, force_update=false) {
   return inversions;
 }
 
-// Fix CSS styling, notably keyboard sizes when DOM or window changes
-function fix_style(current_zoom) {
+// Update transpositions string for session
+function update_transpositions(key=null, force_update=false) {
+  let updated_transpositions = [];
+  $('.kb').each(function(){
+    updated_transpositions.push($(this).data('index')+':'+$(this).find('.tools').data('transposition'));
+  });
+  transpositions = updated_transpositions.join('|');
+  return transpositions;
+}
 
+// Fix CSS styling, notably keyboard sizes when DOM or window changes
+// TODO: improve this, mobile in particular
+function fix_style(current_zoom) {
   // Default = 2 cols, mobile = 1 col, large screen = 3 cols
   let cols = 2;
   if($(window).width() < mobile) cols = 1;
@@ -831,17 +938,14 @@ function fix_style(current_zoom) {
 
   let w = $('body').width();
   let margin = 20;
-  let col = w/cols - (cols>1 ? margin : 0);
-  let kb_w = $('.kb').width();
-  let zoom = col/kb_w;
-
+  let col = w/cols - margin/2;
+  let zoom = col/og_kb_width;
   if(zoom != current_zoom){  
-    $('.kb').css('zoom', zoom);
+    $('.kb .clickable').css('zoom', zoom);
+    $('.kb .key .details').css('zoom', 1-zoom);
   }
-
   $('.kb').css('margin', '');
   $(`.kb:nth-child(${cols}n)`).css('margin-right', 0);
-
   return zoom;
 }
 
@@ -883,8 +987,9 @@ function construct_cookie(cookie=session_cookie) {
     octave_shift = $('#octave').find('.value').text();
     input = $('#chords').val();
     inversions = update_inversions();
+    transpositions = update_transpositions();
     play_pedal = $('#play_pedal').is(':checked');
-    let cookie_value = [humanize, bpm, bpc, instrument, octave_shift, input, inversions, play_pedal].join(';');
+    let cookie_value = [humanize, bpm, bpc, instrument, octave_shift, input, inversions, play_pedal, transpositions].join(';');
     Cookies.set(cookie, cookie_value);
   }, 2000) : null;
 }
@@ -897,7 +1002,7 @@ function update_autocomplete(field_input) {
     let entries = field_input.split(' ');
     let last = entries.length-1;
     let pre = entries.pop();
-    if(pre.length > 1){
+    if(pre.length >= 1){
       $('.autocomplete-helper .pre').html(entries.join(' '));
       $('#faux').val(pre);
       $('#faux').autocomplete('search', pre);
@@ -919,23 +1024,62 @@ function init_autocomplete() {
   let all_chords = generate_chord_list();
   $('#faux').autocomplete({
     source: all_chords,
-    minLength: 2
+    minLength: 1
   });
 }
 
+// Capitalize first letter (of chord in input)
 function capitalize(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+// Get params for MIDI export
+function get_params(post=true) {
+  let midi_chords = [];
+  $('.kb').each(function(){
+    let chord = play_pedal ? $(this).data('pedal')+',' : '';
+    chord += $(this).data('midi').replaceAll(' ',',');
+    midi_chords.push(chord);
+  });
+  midi_string = midi_chords.join('|');
+  data = {
+    chords: midi_string,
+    bpm: parseInt(bpm),
+    cpb: parseInt(bpc),
+    octave_shift: parseInt(octave_shift),
+    humanize: humanize
+  }
+  let string = '';
+  for (const [key, value] of Object.entries(data)) {
+    if(value != 0) string += `--${key} ${value} `;
+  }
+  return post ? data : string;
+}
+
+// Generate and download MIDI file
+function generate_midi() {
+  $.ajax({
+    url: generate_midi_url,
+    data: get_params(),
+    method: 'POST',
+    success: function(filename){
+      window.location=generate_midi_url+filename;
+    }
+  });
 }
 
 // Bind #chords keyup
 function bind_prog_change() {
 
   // Create a keyboard template
-  const tpl = $('.tpl').clone().html();
+  // let tpl = $('.tpl').clone().html();
+
+  let tpl = $('.tpl').clone();
+  tpl.find('.clickable').css('zoom', zoom);
+  tpl = tpl.html();
 
   let input_chords = [];
   $('#chords').unbind('keyup').keyup(function(e){
-
 
     // Stop things that should not be happening rn
     if(player) clearInterval(player);
@@ -1039,7 +1183,7 @@ function bind_prog_change() {
             return;
           // Create new keyboard
           } else {
-            $('.kbs').append(`<div class="kb ${kb_id}" data-index="${i}" data-pedal="${pedal}" data-chord="${full_chord}" data-octave-shift="${octave_shift}" data-inversion="0" style="zoom:${zoom};">${tpl}</div>`);
+            $('.kbs').append(`<div class="kb ${kb_id}" data-index="${i}" data-pedal="${pedal}" data-chord="${full_chord}" data-octave-shift="${octave_shift}" data-inversion="0" >${tpl}</div>`);
             update_keys($(`.${kb_id}`), notes);
           }
         } // if chord found
@@ -1069,6 +1213,7 @@ function bind_prog_change() {
   });
 } // bind prog_change #chords keyup
 
+// Update chords input
 function update_input(){
   let input_chords = $('#chords').val().split(' ');
   if(input_chords[input_chords.length-1] == ''){
@@ -1084,6 +1229,18 @@ function update_input(){
   $('#chords').val(new_entries.join(' ')+' ');
 }
 
+// Toggle chords2midi.py util helper
+function toggle_chords2midi_input() {
+  if($('#c2m').hasClass('visible')) {
+    $('#c2m').removeClass('visible');
+  } else {
+    let params = get_params(false);
+    $('#c2m').val(`python chords2midi.py ${params}`).select();
+    $('#c2m').addClass('visible');
+  }
+}
+
+// Toggle Python variable helper
 function toggle_python_view() {
   if($('.python').hasClass('visible')) {
     $('.python').removeClass('visible');
@@ -1091,16 +1248,9 @@ function toggle_python_view() {
     let input_chords = $('#chords').val().split(' ');
     html = `chords = [\n`;
     input_chords.forEach((inp, i) => {
-      if(!include_inversions){
-        let inv = $(`.kb[data-index="${i}"]`).find('.tools').data('inversion');
-        if(inp != ''){
-          html += `  '${inp}:${inv}',\n`;
-        }  
-      } else {
-        if(inp != ''){
-          html += `    '${inp}',\n`;
-        }
-      }
+      let ch = inp.split(':')[0];
+      let inv = $(`.kb[data-index="${i}"]`).find('.tools').data('inversion');
+      if(inp != '') html += `  '${ch}:${inv}',\n`;
     })
     html += `]`;
     $('.python').val(html).addClass('visible');
@@ -1118,7 +1268,7 @@ $(document).ready(function(){
   // Create white keys and audiofile filenaming scheme
   nw.slice(7, nw.length).forEach((k, i) => {
     [midi, oct, note, note_d] = k;
-    $(`.tpl .clickable`).append(`<div class="white key" data-note="${note_d}${oct}" data-midi="${midi}"></div>`);
+    $(`.tpl .clickable`).append(`<div class="white key" data-note="${note_d}${oct}" data-midi="${midi}"><div class="details">${note_d}${oct}<br>${midi}</div></div>`);
     // audiofiles.push(note_d+oct);
   });
 
@@ -1127,7 +1277,7 @@ $(document).ready(function(){
     [midi, oct, note, note_d] = k;
     [note1, note2] = note_d.split('/');
     let parent = midi-1;
-    $('.tpl').find(`.key[data-midi="${parent}"]`).append(`<div class="black key" data-note="${note2}${oct}" data-note2="${note1}${oct}" data-midi="${midi}" id="k${midi}"></div>`);
+    $('.tpl').find(`.key[data-midi="${parent}"]`).append(`<div class="black key" data-note="${note2}${oct}" data-note2="${note1}${oct}" data-midi="${midi}" id="k${midi}"><div class="details">${note1}${oct}<br>${note2}${oct}<br>${midi}</div></div>`);
     // audiofiles.push(note2+oct);
   });
 
@@ -1151,23 +1301,31 @@ $(document).ready(function(){
   // Adjust UI according to session
   auto_adjust(load_session(session_cookie));
 
+  // Button descriptions
+  $('button').each(function(){
+    let alt = $(this).attr('alt');
+    $(this).attr('title', alt);
+  });
+
   // Finish up pageload
   delayers[delayers.length+1] = setTimeout(() => {
     bind_interactions();
     if(autocomplete) init_autocomplete();
+    og_kb_width = $('.kb').width();
     zoom = fix_style(zoom);
+    $('.kbs').addClass('ready');
     page_loaded = true;
-  }, 2000);
+  }, 1000);
 
 });
 
 // Resize window
 let resize_delayer = null;
 $(window).resize(function(){
-  $('.kb').addClass('resizing');
+  $('.kbs').addClass('resizing');
   if(resize_delayer) clearTimeout(resize_delayer);
   resize_delayer = setTimeout(() => {
     zoom = fix_style(zoom);
-    $('.kb').removeClass('resizing');
+    $('.kbs').removeClass('resizing');
   }, 500);
 });
